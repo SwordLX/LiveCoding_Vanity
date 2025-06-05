@@ -42,18 +42,25 @@
     <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.15/lib/codemirror.js"></script>
 
     <script src='parser.js'></script>
-
+    <script src = "audio.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/codemirror@5.65.15/lib/codemirror.css" rel="stylesheet"></script>
   </head>
   <body>
     <label for = "message">Vanity Editor</label>
-    <textarea id="message" name="message" placeholder="Please write your codes here.">=> Plane;
->> 1; </textarea>
+    <textarea id="message" name="message" placeholder="Please write your codes here.">-> (0.0, 0.0, 1200.0);
+=> Sphere;
+: Mosaic;
+:: 1;
+
+-> (0.0, 0.0, 0.0);
+=> Cube;
+: MusicScale; 
+O(600.0) * 8;</textarea>
   </body>
   <script>
     window.onload = function() {
 
-      function sendOSC(codeFromEditor) {
+      function ReadCode(codeFromEditor) {
         const lines = codeFromEditor.split('\n'); // Split the input into lines
         lines.forEach(line => {
           const trimmedLine = line.trim(); // Trim whitespace
@@ -103,22 +110,37 @@
             value: a
           }
         }
-
         });
-        console.log(args)
+
+        sendOSC(address, args)
+        /* console.log(args)
+        //audio instert
         oscPort.send({
           address,
           args
-        });
+        }) */;
       }
 
+      // parameter used for triggered Audio
+      let isAudioActivated = false
+      window.sendOSC = function(address, args){
+        console.log(args)
+        if(address == "/Activate/FFT" && isAudioActivated == false){
+          Audio.start();
+          isAudioActivated = true;
+        }
+        oscPort.send({
+          address,
+          args
+        })
+      }
           const myTextarea = document.querySelector('textarea')
           CodeMirror.keyMap.playground =  {
                 fallthrough:'default',
                 'Ctrl-Enter'( cm )  { 
                    const code = myparser.parse( cm.getValue() )
                    console.log( 'code:', code )
-                   sendOSC( code ) 
+                   ReadCode( code ) 
                    /* New */
                   //  const lines = cm.getValue().split('\n');
                   //  lines.forEach(line=>{
@@ -134,7 +156,7 @@
                   const line = lines[cursorLine];
                   console.log(line);
                   const code = myparser.parse(line);
-                  sendOSC(code)
+                  ReadCode(code)
                 }
       }
 
@@ -150,6 +172,10 @@
 					metadata: true
 			});
 			oscPort.open()
+
+      /* oscPort.on("ready", function () {
+            sendOSC()
+        }); */
     }
 </script>
 </html>

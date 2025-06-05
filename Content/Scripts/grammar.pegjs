@@ -8,8 +8,16 @@ program = commands: (command)+
      return result.join("");
 }
 
-command = _ element: (Loop/chain/function) _ ";"? _
+command = _ element: (AudioCommand/Loop/chain/function) _ ";"? _
 { return (typeof element === "function"?element():element); }
+
+//Audio Comman
+AudioCommand = "FFT()" {
+   let result = [];
+   result.push("Activate");
+   result.push("FFT");
+   return result;
+}
 
 //function and chain
 //define function chain
@@ -27,7 +35,7 @@ chain = a:(_ function _ ("."/"&")? )+
 function = ManagerCommand/ObjectCommand
 
 //-------------------------------- Loop Definition ---------------------------------------------------//
-LoopElement = _ LoopType:(directionalSpawn/IterationCommand/BuildCircleCommand/ShaderCommand/Loop) _ ";"?
+LoopElement = _ LoopType:(directionalSpawn/IterationCommand/BuildCircleCommand/ShaderCommand/chain/Loop) _ ";"?
 {
    //return (typeof LoopType === "function"?LoopType():LoopType);
    return LoopType;
@@ -168,7 +176,7 @@ SpecificObjectControlCommand = ids:idFormat _ op2:objectOP _ parameter: objectPa
        return result;
     }
 //Object Function format
-ObjectFunction = op:objectOP _ parameter: objectParameter? _ ";"? _
+ObjectFunction = op:objectOP _ parameter: objectParameter? _ (";") ? _
 {
     let result = [];
     result.push(op);
@@ -177,10 +185,17 @@ ObjectFunction = op:objectOP _ parameter: objectParameter? _ ";"? _
 }
 
 idFormat = list/IDGroup
-objectOP = offsetSymbol/rot/rotRate/scale/assignMaterial/colorOp
+objectOP = offsetSymbol/rot/rotRate/scale/assignMaterial/assignInstrument/colorOp
 objectParameter = variable/vector/number/randomNumber
 offsetSymbol = "$" { return "offset";}
 lastObjects = "[...]" { return "LastGroup";}
+
+//define instrument assignment command
+assignInstrument = "FFT:" _ instrumentName: (variable) _
+{
+   let selected = ["instrument", instrumentName];
+   return selected;
+}
 
 //define material assignment command
 assignMaterial = ":" _  matName: (variable)  _ 
@@ -240,7 +255,7 @@ IDGroup = "[" item:( _ positiveIntegerRange _ ","*) + "]" _ rule: ("++" _ positi
 //define vector
 vector 
     = "vec3"*"("  _ x: number _ "," _ y: number _ "," _ z: number _ ")"
-    { return [x, y, z].join("|"); }
+    { return [x, y, z]; }
 
 //define general positiveInteger
 
